@@ -693,6 +693,23 @@ class KernelCrash_OnlyKdumpEnable(PowerNVDump):
             boot_type = self.kernel_crash(crash_type="hmc")
             self.verify_dump_file(boot_type)
 
+class KernelCrash_hugepages(PowerNVDump):
+    '''
+    This classs does check hugepages after kernelcrash 
+    '''
+
+    def runTest(self):
+        self.setup_test()
+        print("SACHIN DEBUG")
+        self.kernel_crash()
+        res_pages = self.c.run_command("cat /proc/meminfo | grep Hugepagesize")
+        if '2048 kB' in res_pages:
+            log.info("hugepage sizes are 2MB")
+        self.c.run_command("grubby --args="default_hugepagesz=1GB hugepagesz=1GB hugepages=80" --update-kernel=/boot/vmlinuz-`uname -r`")
+        self.kernel_crash()
+        res_pages = self.c.run_command("cat /proc/meminfo | grep Hugepagesize")
+        if '1 GB' in res_pages:
+            log.info("hugepage sizes are 1GB")
 
 class KernelCrash_DisableAll(PowerNVDump):
     '''
@@ -759,7 +776,7 @@ class SkirootKernelCrash(PowerNVDump, unittest.TestCase):
         self.kernel_crash()
 
 
-class KernelCrash_KdumpSSH(PowerNVDump):
+class KernelCrash_KdumpSSH(PowerNVDump)e
     '''
     This test verifies kdump/fadump over ssh.
     Need to pass --dump-server-ip and --dump-server-pw in command line.
@@ -1032,6 +1049,7 @@ class KernelCrash_KdumpWorkLoad(PowerNVDump):
 def crash_suite():
     s = unittest.TestSuite()
     s.addTest(KernelCrash_OnlyKdumpEnable())
+    s.addTest(KernelCrash_hugepages())
     s.addTest(KernelCrash_KdumpSMT())
     s.addTest(KernelCrash_KdumpSSH())
     s.addTest(KernelCrash_KdumpNFS())
